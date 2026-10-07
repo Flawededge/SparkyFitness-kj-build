@@ -1,3 +1,4 @@
+import { formatEnergyValue, type EnergyUnit } from './energyDisplay';
 import type { TFunction } from 'i18next';
 import type {
   AdaptiveAdjustment,
@@ -302,7 +303,8 @@ export function buildSessionSubtitle(
   calories: number,
   t: TFunction,
   weightUnit: 'kg' | 'lbs' = 'kg',
-  distanceUnit: 'km' | 'miles' = 'km'
+  distanceUnit: 'km' | 'miles' = 'km',
+  energyUnit: EnergyUnit = 'kcal'
 ): string {
   if (session.type === 'preset') {
     const exerciseCount = session.exercises.length;
@@ -419,7 +421,7 @@ export function buildSessionSubtitle(
     }
     if (calories > 0)
       parts.push(
-        `${Math.round(calories)} ${t('workout.caloriesUnit', { defaultValue: 'Cal' })}`
+        `${formatEnergyValue(calories, energyUnit)} ${energyUnit === 'kJ' ? energyUnit : t('workout.caloriesUnit', { defaultValue: 'Cal' })}`
       );
     return parts.join(' · ');
   }
@@ -453,7 +455,7 @@ export function buildSessionSubtitle(
     if (duration > 0) parts.push(formatDuration(duration));
     if (calories > 0)
       parts.push(
-        `${Math.round(calories)} ${t('workout.caloriesUnit', { defaultValue: 'Cal' })}`
+        `${formatEnergyValue(calories, energyUnit)} ${energyUnit === 'kJ' ? energyUnit : t('workout.caloriesUnit', { defaultValue: 'Cal' })}`
       );
     return parts.join(' · ');
   }
@@ -470,7 +472,7 @@ export function buildSessionSubtitle(
   }
   if (calories > 0)
     parts.push(
-      `${Math.round(calories)} ${t('workout.caloriesUnit', { defaultValue: 'Cal' })}`
+      `${formatEnergyValue(calories, energyUnit)} ${energyUnit === 'kJ' ? energyUnit : t('workout.caloriesUnit', { defaultValue: 'Cal' })}`
     );
   return parts.join(' · ');
 }

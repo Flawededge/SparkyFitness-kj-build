@@ -82,3 +82,28 @@ describe('CaloriesBarChart buildCaloriesAverageLabel (locale-aware)', () => {
     expect(label.value).toBe('—');
   });
 });
+
+describe('CaloriesBarChart energy preference', () => {
+  beforeAll(async () => {
+    await initializeI18n('en');
+    await i18n.changeLanguage('en');
+  });
+
+  test('converts tooltip total but preserves macro shares', () => {
+    const text = buildCaloriesTooltipText(day, day.segments[1], i18n.t, 'kJ');
+    expect(text).toContain('7,740 kJ consumed');
+    expect(text).toContain('32% Fat');
+    expect(day.totalCalories).toBe(1850);
+    expect(day.segments[1].calories).toBe(592);
+  });
+
+  test('converts the unrounded average and preserves empty data', () => {
+    expect(buildCaloriesAverageLabel(1849.6, i18n.t, 'kJ').value).toBe(
+      '7,739 kJ'
+    );
+    expect(buildCaloriesAverageLabel(null, i18n.t, 'kJ').value).toBe('—');
+    expect(buildCaloriesTooltipText(undefined, undefined, i18n.t, 'kJ')).toBe(
+      ''
+    );
+  });
+});

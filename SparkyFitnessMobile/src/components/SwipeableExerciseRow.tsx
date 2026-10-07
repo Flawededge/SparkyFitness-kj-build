@@ -1,3 +1,4 @@
+import type { EnergyUnit } from '../utils/energyDisplay';
 import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, View, Text, Pressable } from 'react-native';
@@ -32,6 +33,7 @@ interface SwipeableExerciseRowProps {
   getImageSource?: GetImageSource;
   weightUnit?: 'kg' | 'lbs';
   distanceUnit?: 'km' | 'miles';
+  energyUnit?: EnergyUnit;
 }
 
 const SwipeableExerciseRow: React.FC<SwipeableExerciseRowProps> = ({
@@ -41,6 +43,7 @@ const SwipeableExerciseRow: React.FC<SwipeableExerciseRowProps> = ({
   getImageSource,
   weightUnit = 'kg',
   distanceUnit = 'km',
+  energyUnit = 'kcal',
 }) => {
   const { t } = useTranslation();
   const swipeableRef = useRef<SwipeableMethods | null>(null);
@@ -104,7 +107,8 @@ const SwipeableExerciseRow: React.FC<SwipeableExerciseRowProps> = ({
     calories,
     t,
     weightUnit,
-    distanceUnit
+    distanceUnit,
+    energyUnit
   );
 
   const handleLongPress = () => {

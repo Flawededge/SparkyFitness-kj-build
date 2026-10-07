@@ -289,3 +289,52 @@ describe('DiaryCalorieMacroSummary', () => {
     expect(queryByText('Omega-3')).toBeNull();
   });
 });
+
+describe('DiaryCalorieMacroSummary energy preference', () => {
+  beforeEach(() => {
+    __resetAppPreferencesStoreForTests();
+    useAppPreferencesStore.setState({ diarySummaryVisible: true });
+  });
+
+  it('converts eaten, goal, overage and projected TDEE to kJ', () => {
+    const { getByText } = renderWidget({
+      energyUnit: 'kJ',
+      summary: buildSummary({
+        calorieBalance: {
+          ...buildSummary().calorieBalance,
+          eaten: 2500,
+          goal: 2000,
+          remaining: -500,
+          progress: 125,
+          tdeeProjection: {
+            projectedBurn: 2400,
+            baselineBurn: 2400,
+            adjustment: 160,
+            targetCalories: 2160,
+            source: 'health_connect_total',
+          },
+        },
+      }),
+    });
+    expect(getByText(/10,460 \/ 8,368 kJ/)).toBeTruthy();
+    expect(getByText(/2,092 over/)).toBeTruthy();
+    expect(getByText('Projected TDEE: 10,042 kJ')).toBeTruthy();
+    expect(getByText('Goal Mode target: 9,037 kJ')).toBeTruthy();
+  });
+
+  it('converts fractional energy before rounding and handles a missing goal', () => {
+    const { getByText, queryByText } = renderWidget({
+      energyUnit: 'kJ',
+      summary: buildSummary({
+        calorieBalance: {
+          ...buildSummary().calorieBalance,
+          eaten: 0.4,
+          goal: 0,
+          remaining: -0.4,
+        },
+      }),
+    });
+    expect(getByText(/2 kJ/)).toBeTruthy();
+    expect(queryByText(/remaining|over/)).toBeNull();
+  });
+});

@@ -15,6 +15,14 @@ const baseProps = {
 };
 
 describe('ExerciseProgressCard', () => {
+  it('converts energy totals and goals without changing exercise minutes', () => {
+    const view = render(
+      <ExerciseProgressCard {...baseProps} energyUnit="kJ" />
+    );
+    expect(view.getByText('1255 / 1674 kJ')).toBeTruthy();
+    expect(view.getByText('45 / 30 min')).toBeTruthy();
+  });
+
   it('opens statistics from the card header', () => {
     const onPressDetails = jest.fn();
     const { getByText } = render(

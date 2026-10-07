@@ -3,7 +3,10 @@ import { useTranslation } from 'react-i18next';
 import { Alert, View, Text, TouchableOpacity } from 'react-native';
 import Button from './ui/Button';
 import { useNavigation } from '@react-navigation/native';
-import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
+import ReanimatedSwipeable, {
+  type SwipeableMethods,
+} from 'react-native-gesture-handler/ReanimatedSwipeable';
+import { formatEnergyValue } from '../utils/energyDisplay';
 import Animated from 'react-native-reanimated';
 import { DeleteRowAction } from './SwipeableDeleteRow';
 import { useRowCollapse } from '../hooks/useRowCollapse';
@@ -31,8 +34,13 @@ const SwipeableFoodRow: React.FC<SwipeableFoodRowProps> = ({
 }) => {
   const { t } = useTranslation();
   const { preferences } = usePreferences();
+  const energyUnit = preferences?.energy_unit ?? 'kcal';
+  const calorieUnit =
+    energyUnit === 'kJ'
+      ? energyUnit
+      : t('foodRow.caloriesUnit', { defaultValue: 'Cal' });
   const navigation = useNavigation();
-  const swipeableRef = useRef<any>(null);
+  const swipeableRef = useRef<SwipeableMethods>(null);
   const invalidateCacheRef = useRef<() => void>(() => {});
   const { collapse, handleLayout, animatedStyle } = useRowCollapse(() =>
     invalidateCacheRef.current()
@@ -186,12 +194,11 @@ const SwipeableFoodRow: React.FC<SwipeableFoodRowProps> = ({
               className="py-0 px-0"
               textClassName="text-sm text-text-secondary font-medium"
             >
-              {`${Math.round(nutrition.calories)} ${t('foodRow.caloriesUnit', { defaultValue: 'Cal' })} ▾`}
+              {`${formatEnergyValue(nutrition.calories, energyUnit)} ${calorieUnit} ▾`}
             </Button>
           ) : (
             <Text className="text-sm text-text-secondary font-medium mr-2">
-              {Math.round(nutrition.calories)}{' '}
-              {t('foodRow.caloriesUnit', { defaultValue: 'Cal' })}
+              {formatEnergyValue(nutrition.calories, energyUnit)} {calorieUnit}
             </Text>
           )}
         </View>

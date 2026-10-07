@@ -2,18 +2,19 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, Text } from 'react-native';
 import { useCSSVariable } from 'uniwind';
+import { formatEnergyValue, type EnergyUnit } from '../utils/energyDisplay';
 import ProgressRing from './ProgressRing';
-import { formatLocalizedNumber } from '../localization';
 
 interface SideStatProps {
   label: string;
   value: number;
+  energyUnit: EnergyUnit;
 }
 
-const SideStat: React.FC<SideStatProps> = ({ label, value }) => (
+const SideStat: React.FC<SideStatProps> = ({ label, value, energyUnit }) => (
   <View className="items-center justify-center flex-1">
     <Text className="text-xl font-bold text-text-primary">
-      {formatLocalizedNumber(Math.round(value))}
+      {formatEnergyValue(value, energyUnit)}
     </Text>
     <Text className="text-text-secondary text-xs mt-1">{label}</Text>
   </View>
@@ -25,6 +26,7 @@ interface CalorieRingCardProps {
   calorieGoal: number;
   remainingCalories: number;
   progressPercent: number;
+  energyUnit?: EnergyUnit;
 }
 
 const CalorieRingCard: React.FC<CalorieRingCardProps> = ({
@@ -33,6 +35,7 @@ const CalorieRingCard: React.FC<CalorieRingCardProps> = ({
   calorieGoal,
   remainingCalories,
   progressPercent,
+  energyUnit = 'kcal',
 }) => {
   const { t } = useTranslation();
   const [progressTrackColor, progressFillColor] = useCSSVariable([
@@ -40,7 +43,7 @@ const CalorieRingCard: React.FC<CalorieRingCardProps> = ({
     '--color-calories',
   ]) as [string, string];
 
-  const displayRemaining = Math.round(remainingCalories) || 0;
+  const displayRemaining = remainingCalories || 0;
 
   return (
     <View className="bg-surface rounded-xl p-4 mb-3 shadow-sm">
@@ -48,6 +51,7 @@ const CalorieRingCard: React.FC<CalorieRingCardProps> = ({
         <SideStat
           label={t('dashboard.consumed', { defaultValue: 'Consumed' })}
           value={caloriesConsumed}
+          energyUnit={energyUnit}
         />
 
         <View className="relative items-center justify-center mx-2">
@@ -62,15 +66,16 @@ const CalorieRingCard: React.FC<CalorieRingCardProps> = ({
           </View>
           <View className="absolute items-center justify-center">
             <Text className="text-2xl font-bold text-text-primary">
-              {formatLocalizedNumber(displayRemaining)}
+              {formatEnergyValue(displayRemaining, energyUnit)}
             </Text>
             <Text className="text-text-secondary text-xs">
               {t('dashboard.remaining', { defaultValue: 'remaining' })}
             </Text>
             <Text className="text-text-muted text-xs mt-0.5">
-              {t('dashboard.ofCalories', {
-                defaultValue: 'of {{value}} kcal',
-                value: formatLocalizedNumber(calorieGoal),
+              {t('dashboard.ofEnergy', {
+                defaultValue: 'of {{value}} {{unit}}',
+                unit: energyUnit,
+                value: formatEnergyValue(calorieGoal, energyUnit),
               })}
             </Text>
           </View>
@@ -79,6 +84,7 @@ const CalorieRingCard: React.FC<CalorieRingCardProps> = ({
         <SideStat
           label={t('dashboard.burned', { defaultValue: 'Burned' })}
           value={caloriesBurned}
+          energyUnit={energyUnit}
         />
       </View>
     </View>

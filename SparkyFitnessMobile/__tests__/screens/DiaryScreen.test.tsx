@@ -96,8 +96,11 @@ jest.mock('../../src/hooks/useCheckInPhotos', () => ({
     mockUseCheckInPhotoDates(enabled as never),
   useCheckInPhotosByDate: () => ({ photos: [], isLoading: false }),
 }));
+const mockRefetchPreferences = jest.fn().mockResolvedValue(undefined);
+
 jest.mock('../../src/hooks/usePreferences', () => ({
   usePreferences: jest.fn(() => ({
+    refetch: mockRefetchPreferences,
     preferences: {
       default_weight_unit: 'kg',
       default_distance_unit: 'km',
@@ -457,6 +460,7 @@ describe('DiaryScreen custom queries', () => {
     });
 
     expect(refetchSummary).toHaveBeenCalledTimes(1);
+    expect(mockRefetchPreferences).toHaveBeenCalledTimes(1);
     expect(refetchMeasurements).toHaveBeenCalledTimes(1);
     expect(refetchCustomMeasurements).toHaveBeenCalledTimes(1);
     expect(refetchCustomNutrients).toHaveBeenCalledTimes(1);

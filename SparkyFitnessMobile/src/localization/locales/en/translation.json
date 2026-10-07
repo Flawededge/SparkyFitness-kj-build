@@ -815,7 +815,8 @@
     "logDrink": "Log {{drink}}",
     "perPress": "{{value}} {{unit}}",
     "logDrinkFailed": "Could not log that drink",
-    "exerciseStatistics": "Statistics"
+    "exerciseStatistics": "Statistics",
+    "ofEnergy": "of {{value}} {{unit}}"
   },
   "syncScreen": {
     "healthConnectSettings": "Health Connect settings",
@@ -2588,7 +2589,9 @@
     "fallbackProjectionSource": "BMR + active calories fallback",
     "legacyProjectionSource": "Device projection",
     "collapse": "Collapse this section",
-    "expand": "Expand this section"
+    "expand": "Expand this section",
+    "projectedTdeeEnergy": "Projected TDEE: {{value}} {{unit}}",
+    "goalModeTargetEnergy": "Goal Mode target: {{value}} {{unit}}"
   },
   "dateRange": {
     "removeTitle": "Select a date range to remove",
@@ -4524,7 +4527,9 @@
       "otherMacro": "Other",
       "avgCalories": "Avg",
       "avgCaloriesValue": "{{formattedCount}} kcal",
-      "noAverage": "—"
+      "noAverage": "—",
+      "tooltipEnergy": "{{formattedCount}} {{unit}} consumed",
+      "avgEnergyValue": "{{formattedCount}} {{unit}}"
     },
     "loading": "Loading chart...",
     "weightLoadFailed": "Failed to load weight data",

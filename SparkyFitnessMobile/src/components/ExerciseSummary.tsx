@@ -1,3 +1,4 @@
+import type { EnergyUnit } from '../utils/energyDisplay';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, Text, Pressable } from 'react-native';
@@ -29,6 +30,7 @@ interface ExerciseSummaryProps {
   getImageSource?: GetImageSource;
   weightUnit?: 'kg' | 'lbs';
   distanceUnit?: 'km' | 'miles';
+  energyUnit?: EnergyUnit;
 }
 
 const ExerciseSummary: React.FC<ExerciseSummaryProps> = ({
@@ -40,6 +42,7 @@ const ExerciseSummary: React.FC<ExerciseSummaryProps> = ({
   getImageSource,
   weightUnit = 'kg',
   distanceUnit = 'km',
+  energyUnit = 'kcal',
 }) => {
   const { t } = useTranslation();
   const [accentPrimary, textMuted] = useCSSVariable([
@@ -299,6 +302,7 @@ const ExerciseSummary: React.FC<ExerciseSummaryProps> = ({
             getImageSource={getImageSource}
             weightUnit={weightUnit}
             distanceUnit={distanceUnit}
+            energyUnit={energyUnit}
           />
         ))}
       </View>

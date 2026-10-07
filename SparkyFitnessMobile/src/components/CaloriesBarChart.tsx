@@ -9,8 +9,9 @@ import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { useCSSVariable } from 'uniwind';
 
+import { convertEnergyValue } from '@workspace/shared';
+import { formatEnergyValue, type EnergyUnit } from '../utils/energyDisplay';
 import { getNutrientLabel } from '../constants/nutrients';
-import { formatLocalizedNumber } from '../localization/i18n';
 import type {
   CaloriesDataPoint,
   HealthTrendDateRange,
@@ -52,6 +53,7 @@ type CaloriesBarChartProps = {
   /** The resolved calorie goal for each day in `data`, same order. A day omitted or
    * `<= 0` draws no segment for that day; the whole line is omitted when none resolve. */
   goals?: (number | null)[];
+  energyUnit?: EnergyUnit;
 };
 
 const PLOT_HEIGHT = 150;
@@ -121,13 +123,15 @@ const getCaloriesSegmentLabel = (
 export const buildCaloriesTooltipText = (
   day: CaloriesStackDay | undefined,
   selectedSegment: CaloriesStackSegment | undefined,
-  t: ReturnType<typeof useTranslation>['t']
+  t: ReturnType<typeof useTranslation>['t'],
+  energyUnit: EnergyUnit = 'kcal'
 ): string => {
   if (!day) return DEFAULT_TOOLTIP;
-  const formattedCount = formatLocalizedNumber(Math.round(day.totalCalories));
-  const totalPart = t('charts.calories.tooltip', {
+  const formattedCount = formatEnergyValue(day.totalCalories, energyUnit);
+  const totalPart = t('charts.calories.tooltipEnergy', {
     formattedCount,
-    defaultValue: '{{formattedCount}} kcal consumed',
+    defaultValue: '{{formattedCount}} {{unit}} consumed',
+    unit: energyUnit,
   });
   const datePart = formatTooltipDate(day.day);
 
@@ -157,7 +161,8 @@ export const buildCaloriesTooltipText = (
  */
 export const buildCaloriesAverageLabel = (
   averageCalories: number | null,
-  t: ReturnType<typeof useTranslation>['t']
+  t: ReturnType<typeof useTranslation>['t'],
+  energyUnit: EnergyUnit = 'kcal'
 ): StatLabel => ({
   // Just "Avg", not "Avg calories": Sleep's two tiles need "time in bed" vs. "time asleep"
   // to tell them apart, but this card only ever has the one stat.
@@ -165,9 +170,10 @@ export const buildCaloriesAverageLabel = (
   value:
     averageCalories == null
       ? t('charts.calories.noAverage', { defaultValue: '—' })
-      : t('charts.calories.avgCaloriesValue', {
-          formattedCount: formatLocalizedNumber(Math.round(averageCalories)),
-          defaultValue: '{{formattedCount}} kcal',
+      : t('charts.calories.avgEnergyValue', {
+          formattedCount: formatEnergyValue(averageCalories, energyUnit),
+          defaultValue: '{{formattedCount}} {{unit}}',
+          unit: energyUnit,
         }),
 });
 
@@ -197,9 +203,14 @@ const CaloriesBarChart: React.FC<CaloriesBarChartProps> = ({
   range,
   averageCalories,
   goals,
+  energyUnit = 'kcal',
 }) => {
   const { t } = useTranslation();
-  const averageLabel = buildCaloriesAverageLabel(averageCalories, t);
+  const averageLabel = buildCaloriesAverageLabel(
+    averageCalories,
+    t,
+    energyUnit
+  );
   const [plotWidth, setPlotWidth] = useState(0);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [selectedPointY, setSelectedPointY] = useState<number | null>(null);
@@ -233,9 +244,12 @@ const CaloriesBarChart: React.FC<CaloriesBarChartProps> = ({
   const yAxisScale = useMemo(() => {
     const dataMax = Math.max(0, ...days.map((day) => day.totalCalories));
     const effectiveMax = resolveEffectiveMaxCalories(dataMax, goals ?? []);
-    return computeNiceYAxisScale(0, effectiveMax);
-  }, [days, goals]);
-  const maxCalories = yAxisScale.max;
+    return computeNiceYAxisScale(
+      0,
+      convertEnergyValue(effectiveMax, 'kcal', energyUnit)
+    );
+  }, [days, goals, energyUnit]);
+  const maxCalories = convertEnergyValue(yAxisScale.max, energyUnit, 'kcal');
 
   const yAxisLabelWidth = useMemo(
     () =>
@@ -300,7 +314,12 @@ const CaloriesBarChart: React.FC<CaloriesBarChartProps> = ({
     return days[selectedIndex]?.segments[blockIndex];
   }, [selectedIndex, selectedPointY, columns, days]);
 
-  const tooltipText = buildCaloriesTooltipText(selectedDay, selectedSegment, t);
+  const tooltipText = buildCaloriesTooltipText(
+    selectedDay,
+    selectedSegment,
+    t,
+    energyUnit
+  );
 
   const touchLayout: ChartTouchLayout = useMemo(() => {
     if (plotWidth <= 0 || columns.length === 0) return EMPTY_CHART_TOUCH_LAYOUT;
@@ -390,7 +409,8 @@ const CaloriesBarChart: React.FC<CaloriesBarChartProps> = ({
                   numberOfLines={1}
                   allowFontScaling={false}
                   style={{
-                    top: PLOT_HEIGHT - (tick / maxCalories) * PLOT_HEIGHT - 7,
+                    top:
+                      PLOT_HEIGHT - (tick / yAxisScale.max) * PLOT_HEIGHT - 7,
                     fontSize: CHART_LABEL_FONT_SIZE,
                   }}
                 >

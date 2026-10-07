@@ -5,6 +5,7 @@ import { useCSSVariable } from 'uniwind';
 import type { FoodEntry } from '../types/foodEntries';
 import type { DailyGoals } from '../types/goals';
 import type { MealType } from '../types/mealTypes';
+import { formatEnergyValue, type EnergyUnit } from '../utils/energyDisplay';
 import Icon from './Icon';
 import { MEAL_CONFIG } from '../constants/meals';
 import SwipeableFoodRow from './SwipeableFoodRow';
@@ -22,6 +23,7 @@ interface FoodSummaryProps {
   mealTypes: MealType[];
   goals?: DailyGoals;
   calorieGoal?: number;
+  energyUnit?: EnergyUnit;
   onAddFood?: () => void;
   onAdjustServing?: (entry: FoodEntry) => void;
   onPressMealType?: (
@@ -35,6 +37,7 @@ interface MealSectionProps {
   group: MealGroup;
   goals?: DailyGoals;
   calorieGoal?: number;
+  energyUnit?: EnergyUnit;
   onAdjustServing?: (entry: FoodEntry) => void;
   onPressMealType?: (
     mealTypeId: string | null,
@@ -65,6 +68,7 @@ const MealSection: React.FC<MealSectionProps> = ({
   group,
   goals,
   calorieGoal,
+  energyUnit = 'kcal',
   onAdjustServing,
   onPressMealType,
 }) => {
@@ -95,9 +99,13 @@ const MealSection: React.FC<MealSectionProps> = ({
       {(totalCalories > 0 || targetCalories > 0) && (
         <View className="bg-accent-primary/5 rounded-full px-2.5 py-0.5">
           <Text className="text-xs text-accent-primary font-semibold">
-            {totalCalories}
-            {targetCalories > 0 ? ` / ${targetCalories}` : ''}{' '}
-            {t('foodSummary.caloriesUnit', { defaultValue: 'Cal' })}
+            {formatEnergyValue(totalCalories, energyUnit)}
+            {targetCalories > 0
+              ? ` / ${formatEnergyValue(targetCalories, energyUnit)}`
+              : ''}{' '}
+            {energyUnit === 'kJ'
+              ? energyUnit
+              : t('foodSummary.caloriesUnit', { defaultValue: 'Cal' })}
           </Text>
         </View>
       )}
@@ -148,6 +156,7 @@ const FoodSummary: React.FC<FoodSummaryProps> = ({
   mealTypes,
   goals,
   calorieGoal,
+  energyUnit = 'kcal',
   onAddFood,
   onAdjustServing,
   onPressMealType,
@@ -176,6 +185,7 @@ const FoodSummary: React.FC<FoodSummaryProps> = ({
           group={group}
           goals={goals}
           calorieGoal={calorieGoal}
+          energyUnit={energyUnit}
           onAdjustServing={onAdjustServing}
           onPressMealType={onPressMealType}
         />

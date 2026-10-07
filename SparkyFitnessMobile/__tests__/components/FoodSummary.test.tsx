@@ -231,3 +231,23 @@ describe('FoodSummary', () => {
     expect(queryByText(/\/ 500/)).toBeNull();
   });
 });
+
+it('converts meal totals and percentage targets to the preferred energy unit', () => {
+  const food = {
+    ...entry('e1', 'sys-b', 'breakfast'),
+    quantity: 1,
+    serving_size: 1,
+    calories: 100,
+  } as FoodEntry;
+  const view = render(
+    <FoodSummary
+      foodEntries={[food]}
+      mealTypes={mealTypes}
+      goals={{ breakfast_percentage: 25 } as DailyGoals}
+      calorieGoal={2000}
+      energyUnit="kJ"
+    />
+  );
+  expect(view.getByText(/418 \/ 2,092 kJ/)).toBeTruthy();
+  expect(food.calories).toBe(100);
+});

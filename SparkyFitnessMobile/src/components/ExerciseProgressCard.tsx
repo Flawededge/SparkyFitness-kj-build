@@ -1,3 +1,5 @@
+import { convertEnergyValue } from '@workspace/shared';
+import type { EnergyUnit } from '../utils/energyDisplay';
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, Text, Pressable } from 'react-native';
@@ -144,6 +146,7 @@ interface ExerciseProgressCardProps {
   exerciseMinutesGoal: number;
   exerciseCalories: number;
   exerciseCaloriesGoal: number;
+  energyUnit?: EnergyUnit;
   /** Opens exercise statistics from the card's header. */
   onPressDetails?: () => void;
 }
@@ -153,6 +156,7 @@ const ExerciseProgressCard: React.FC<ExerciseProgressCardProps> = ({
   exerciseMinutesGoal,
   exerciseCalories,
   exerciseCaloriesGoal,
+  energyUnit = 'kcal',
   onPressDetails,
 }) => {
   const { t } = useTranslation();
@@ -200,9 +204,13 @@ const ExerciseProgressCard: React.FC<ExerciseProgressCardProps> = ({
           <View className="h-3" />
           <ProgressBar
             label={t('dashboard.calories', { defaultValue: 'Calories' })}
-            current={exerciseCalories}
-            goal={exerciseCaloriesGoal}
-            unit={t('nutrition.caloriesUnit', { defaultValue: 'Cal' })}
+            current={convertEnergyValue(exerciseCalories, 'kcal', energyUnit)}
+            goal={convertEnergyValue(exerciseCaloriesGoal, 'kcal', energyUnit)}
+            unit={
+              energyUnit === 'kJ'
+                ? energyUnit
+                : t('nutrition.caloriesUnit', { defaultValue: 'Cal' })
+            }
             color={exerciseColor}
             trackColor={trackColor}
             opacity={0.5}

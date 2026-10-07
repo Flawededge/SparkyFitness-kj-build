@@ -16,6 +16,7 @@ import type {
   HealthTrendSeries,
   HydrationDataPoint,
 } from '../types/healthTrends';
+import type { EnergyUnit } from '../utils/energyDisplay';
 import CaloriesBarChart from './CaloriesBarChart';
 import HydrationBarChart from './HydrationBarChart';
 import SleepTimelineChart from './SleepTimelineChart';
@@ -41,6 +42,7 @@ type HealthTrendsPagerProps = {
   /** The resolved calorie goal for each day in the window, same order as
    * `calories.data`, stepping to a new value on the day it actually changed. */
   calorieGoals?: (number | null)[];
+  energyUnit?: EnergyUnit;
   visibleTrends: readonly HealthTrendKey[];
   activePage: number;
   onPageSelected: (page: number) => void;
@@ -73,6 +75,7 @@ const HealthTrendsPager: React.FC<HealthTrendsPagerProps> = ({
   weightGoal,
   hydrationGoals,
   calorieGoals,
+  energyUnit,
   visibleTrends,
   activePage,
   onPageSelected,
@@ -99,7 +102,12 @@ const HealthTrendsPager: React.FC<HealthTrendsPagerProps> = ({
       />
     ),
     calories: () => (
-      <CaloriesBarChart {...calories} range={range} goals={calorieGoals} />
+      <CaloriesBarChart
+        {...calories}
+        range={range}
+        goals={calorieGoals}
+        energyUnit={energyUnit}
+      />
     ),
   };
 

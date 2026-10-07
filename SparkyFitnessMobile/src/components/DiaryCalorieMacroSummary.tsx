@@ -11,6 +11,7 @@ import Animated, {
 import { useIsFocused } from '@react-navigation/native';
 import { useCSSVariable } from 'uniwind';
 
+import { formatEnergyValue, type EnergyUnit } from '../utils/energyDisplay';
 import Icon from './Icon';
 import NutrientPill from './NutrientPill';
 import { useAppPreferencesStore } from '../stores/appPreferencesStore';
@@ -18,7 +19,6 @@ import { getNetCarbsValue } from '../utils/nutrientUtils';
 import { NUTRIENT_META, getNutrientLabel } from '../constants/nutrients';
 import type { DailySummary } from '../types/dailySummary';
 import type { UserCustomNutrient } from '../hooks/useCustomNutrients';
-import { formatLocalizedNumber } from '../localization';
 
 const CORE_MACROS = ['protein', 'carbs', 'fat', 'dietary_fiber'] as const;
 
@@ -27,6 +27,7 @@ interface CalorieBarProps {
   goal: number;
   remaining: number;
   progressPercent: number;
+  energyUnit: EnergyUnit;
 }
 
 const CalorieBar: React.FC<CalorieBarProps> = ({
@@ -34,6 +35,7 @@ const CalorieBar: React.FC<CalorieBarProps> = ({
   goal,
   remaining,
   progressPercent,
+  energyUnit,
 }) => {
   const { t } = useTranslation();
   const [barWidth, setBarWidth] = useState(0);
@@ -85,24 +87,24 @@ const CalorieBar: React.FC<CalorieBarProps> = ({
     <View>
       <View className="flex-row justify-between items-baseline mb-3">
         <Text className="text-lg font-bold text-text-primary">
-          {formatLocalizedNumber(Math.round(eaten))}
+          {formatEnergyValue(eaten, energyUnit)}
           {hasGoal && (
             <Text className="text-lg font-semibold text-text-muted">
               {/* i18n-audit-ignore-next-line hardcoded-ui-text -- slash and spacing are numeric presentation punctuation. */}
               {t('nutrition.goalSeparator', {
                 defaultValue: ' / {{value}}',
-                value: formatLocalizedNumber(Math.round(goal)),
+                value: formatEnergyValue(goal, energyUnit),
               })}
             </Text>
           )}
           <Text className="text-sm font-normal text-text-muted">
             {' '}
-            {t('nutrition.caloriesShort', { defaultValue: 'kcal' })}
+            {energyUnit}
           </Text>
         </Text>
         {hasGoal && (
           <Text className="text-sm font-bold text-text-primary">
-            {formatLocalizedNumber(Math.abs(Math.round(remaining)))}
+            {formatEnergyValue(Math.abs(remaining), energyUnit)}
             <Text className="text-sm font-normal text-text-muted">
               {' '}
               {remaining >= 0
@@ -161,6 +163,7 @@ const CalorieBar: React.FC<CalorieBarProps> = ({
 
 interface DiaryCalorieMacroSummaryProps {
   summary: DailySummary;
+  energyUnit?: EnergyUnit;
   showNetCarbs: boolean;
   /** Diary-specific custom nutrient keys (view_group='diary'), already capped to 4. */
   customNutrientKeys: string[];
@@ -169,6 +172,7 @@ interface DiaryCalorieMacroSummaryProps {
 
 const DiaryCalorieMacroSummary: React.FC<DiaryCalorieMacroSummaryProps> = ({
   summary,
+  energyUnit = 'kcal',
   showNetCarbs,
   customNutrientKeys,
   customNutrients,
@@ -265,6 +269,7 @@ const DiaryCalorieMacroSummary: React.FC<DiaryCalorieMacroSummaryProps> = ({
           </Animated.View>
         </View>
         <CalorieBar
+          energyUnit={energyUnit}
           eaten={eaten}
           goal={goal}
           remaining={remaining}
@@ -274,18 +279,19 @@ const DiaryCalorieMacroSummary: React.FC<DiaryCalorieMacroSummaryProps> = ({
       {projection && (
         <View className="mt-2 rounded-lg bg-surface px-3 py-2">
           <Text className="text-xs font-semibold text-text-primary">
-            {t('diarySummary.projectedTdee', {
-              defaultValue: 'Projected TDEE: {{value}} kcal',
-              value: formatLocalizedNumber(
-                Math.round(projection.projectedBurn)
-              ),
+            {t('diarySummary.projectedTdeeEnergy', {
+              defaultValue: 'Projected TDEE: {{value}} {{unit}}',
+              unit: energyUnit,
+              value: formatEnergyValue(projection.projectedBurn, energyUnit),
             })}
           </Text>
           <Text className="text-xs text-text-secondary mt-0.5">
-            {t('diarySummary.goalModeTarget', {
-              defaultValue: 'Goal Mode target: {{value}} kcal',
-              value: formatLocalizedNumber(
-                Math.round(projection.targetCalories ?? goal)
+            {t('diarySummary.goalModeTargetEnergy', {
+              defaultValue: 'Goal Mode target: {{value}} {{unit}}',
+              unit: energyUnit,
+              value: formatEnergyValue(
+                projection.targetCalories ?? goal,
+                energyUnit
               ),
             })}
           </Text>

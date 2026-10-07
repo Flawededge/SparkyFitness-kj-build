@@ -7,6 +7,7 @@ import {
 } from '../hooks/queryTestUtils';
 import SwipeableFoodRow from '../../src/components/SwipeableFoodRow';
 import type { FoodEntry } from '../../src/types/foodEntries';
+import { preferencesQueryKey } from '../../src/hooks/queryKeys';
 
 const mockNavigate = jest.fn();
 
@@ -41,6 +42,29 @@ describe('SwipeableFoodRow', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
+
+  it.each([false, true])(
+    'uses cached kJ preferences with quick adjustment enabled: %s',
+    (canAdjust) => {
+      const entry = createEntry();
+      const onAdjustServing = jest.fn();
+      const client = createTestQueryClient();
+      client.setQueryData(preferencesQueryKey, { energy_unit: 'kJ' });
+      const screen = render(
+        <SwipeableFoodRow
+          entry={entry}
+          nutrition={{ calories: 120, protein: 15, carbs: 8, fat: 2 }}
+          onAdjustServing={canAdjust ? onAdjustServing : undefined}
+        />,
+        { wrapper: createQueryWrapper(client) }
+      );
+
+      fireEvent.press(screen.getByText(/502 kJ/));
+      if (canAdjust) expect(onAdjustServing).toHaveBeenCalledWith(entry);
+      else expect(onAdjustServing).not.toHaveBeenCalled();
+      expect(entry.calories).toBe(120);
+    }
+  );
 
   it('opens serving adjustment from the calorie affordance', () => {
     const entry = createEntry();

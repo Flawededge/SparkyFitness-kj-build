@@ -269,7 +269,7 @@ const DiaryScreen: React.FC<DiaryScreenProps> = ({ navigation }) => {
     [navigation, selectedDate, mealTypes, t]
   );
 
-  const { preferences } = usePreferences();
+  const { preferences, refetch: refetchPreferences } = usePreferences();
   const weightUnit = (preferences?.default_weight_unit as 'kg' | 'lbs') ?? 'kg';
   const distanceUnit =
     (preferences?.default_distance_unit as 'km' | 'miles') ?? 'km';
@@ -482,6 +482,7 @@ const DiaryScreen: React.FC<DiaryScreenProps> = ({ navigation }) => {
     try {
       await Promise.allSettled([
         refetch(),
+        refetchPreferences(),
         refetchMeasurements(),
         refetchCustomMeasurements(),
         refetchCustomNutrients(),
@@ -494,6 +495,7 @@ const DiaryScreen: React.FC<DiaryScreenProps> = ({ navigation }) => {
   }, [
     isConnected,
     refetch,
+    refetchPreferences,
     refetchMeasurements,
     refetchCustomMeasurements,
     refetchCustomNutrients,
@@ -619,6 +621,7 @@ const DiaryScreen: React.FC<DiaryScreenProps> = ({ navigation }) => {
           summary.calorieGoal > 0) && (
           <DiaryCalorieMacroSummary
             summary={summary}
+            energyUnit={preferences?.energy_unit}
             showNetCarbs={preferences?.show_net_carbs === true}
             customNutrientKeys={customNutrientKeys}
             customNutrients={customNutrients}
@@ -646,6 +649,7 @@ const DiaryScreen: React.FC<DiaryScreenProps> = ({ navigation }) => {
             />
             <FoodSummary
               foodEntries={summary.foodEntries}
+              energyUnit={preferences?.energy_unit}
               mealTypes={mealTypes}
               goals={summary.goals}
               calorieGoal={summary.calorieGoal}
@@ -659,6 +663,7 @@ const DiaryScreen: React.FC<DiaryScreenProps> = ({ navigation }) => {
             />
             <ExerciseSummary
               exerciseEntries={summary.exerciseEntries}
+              energyUnit={preferences?.energy_unit}
               entryDate={selectedDate}
               getImageSource={getImageSource}
               weightUnit={weightUnit}

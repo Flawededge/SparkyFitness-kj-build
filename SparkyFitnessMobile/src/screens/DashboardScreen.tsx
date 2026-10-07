@@ -533,6 +533,7 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({ navigation }) => {
                   goal > 0) ? (
                 <CalorieRingCard
                   key="calorieRing"
+                  energyUnit={preferences.energy_unit}
                   caloriesConsumed={eaten}
                   caloriesBurned={burned}
                   calorieGoal={goal}
@@ -720,6 +721,7 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({ navigation }) => {
                   key="exercise"
                   exerciseMinutes={summary.exerciseMinutes}
                   exerciseMinutesGoal={summary.exerciseMinutesGoal}
+                  energyUnit={preferences.energy_unit}
                   exerciseCalories={summary.otherExerciseCalories}
                   exerciseCaloriesGoal={summary.exerciseCaloriesGoal}
                   onPressDetails={() =>
@@ -820,6 +822,7 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({ navigation }) => {
                     hydrationGoals={trends.hydration.hydrationGoals}
                     weightGoal={weightGoal}
                     calorieGoals={trends.calories.calorieGoals}
+                    energyUnit={preferences.energy_unit}
                     visibleTrends={visibleTrends}
                     activePage={chartPage}
                     onPageSelected={setChartPage}
