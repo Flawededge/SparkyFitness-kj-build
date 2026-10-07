@@ -407,7 +407,83 @@ describe('writebackPhase', () => {
     await writebackPhase([tomorrow]);
 
     expect(mockSaveQuantity).not.toHaveBeenCalled();
-    expect(store[`writebackHydrationSig:${tomorrow}`]).toBeUndefined();
+    expect(store[`writebackHydrationSig:${tomorrow}`]).toBeNull();
+  });
+
+
+  it('exports real drinks while food-derived water is deferred until noon', async () => {
+    const clock = jest.useFakeTimers().setSystemTime(
+      new Date(2026, 5, 1, 9, 30)
+    );
+    try {
+      prefs({ writebackHydrationEnabled: true });
+      mockSummary.mockResolvedValue({
+        foodEntries: [],
+        waterIntake: 750,
+        waterIntakeBreakdown: { food_ml: 250 },
+      });
+      mockWaterLog.mockResolvedValue([manualLogEntry(500)]);
+      await writebackPhase(['2026-06-01']);
+      expect(mockSaveQuantity).toHaveBeenCalledTimes(1);
+      expect(mockSaveQuantity.mock.calls[0][2]).toBe(500);
+      expect(store['writebackHydrationSig:2026-06-01']).toBeNull();
+
+      clock.setSystemTime(new Date(2026, 5, 1, 12, 30));
+      await writebackPhase(['2026-06-01']);
+      expect(mockSaveQuantity).toHaveBeenCalledTimes(3);
+      expect(mockSaveQuantity.mock.calls[2][2]).toBe(250);
+      expect(store['writebackHydrationSig:2026-06-01']).toEqual(
+        expect.any(String)
+      );
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('does not duplicate water when deleting the previous samples fails', async () => {
+    prefs({
+      writebackHydrationEnabled: true,
+      'writebackHydrationUuids:2026-06-01': ['old-water'],
+      'writebackHydrationSig:2026-06-01': 'old-signature',
+    });
+    mockWaterLog.mockResolvedValue([manualLogEntry(500)]);
+    mockDeleteObjects.mockRejectedValueOnce(new Error('device locked'));
+    await writebackPhase(['2026-06-01']);
+    expect(mockSaveQuantity).not.toHaveBeenCalled();
+    expect(store['writebackHydrationUuids:2026-06-01']).toEqual(['old-water']);
+    expect(store['writebackHydrationSig:2026-06-01']).toBeNull();
+
+    await writebackPhase(['2026-06-01']);
+    expect(mockSaveQuantity).toHaveBeenCalledTimes(1);
+    expect(store['writebackHydrationUuids:2026-06-01']).toEqual(['water-1']);
+  });
+
+  it('reconciles a reverted diary after a replacement save fails', async () => {
+    prefs({ writebackHydrationEnabled: true });
+    mockWaterLog.mockResolvedValue([manualLogEntry(500)]);
+    await writebackPhase(['2026-06-01']);
+
+    mockWaterLog.mockResolvedValue([manualLogEntry(750)]);
+    mockSaveQuantity.mockResolvedValueOnce(undefined);
+    await writebackPhase(['2026-06-01']);
+    expect(store['writebackHydrationSig:2026-06-01']).toBeNull();
+
+    mockWaterLog.mockResolvedValue([manualLogEntry(500)]);
+    await writebackPhase(['2026-06-01']);
+    expect(mockSaveQuantity).toHaveBeenCalledTimes(3);
+    expect(mockSaveQuantity.mock.calls[2][2]).toBe(500);
+  });
+
+  it('skips non-positive and non-finite water amounts', async () => {
+    prefs({ writebackHydrationEnabled: true });
+    mockWaterLog.mockResolvedValue([
+      manualLogEntry(0),
+      manualLogEntry(-50),
+      manualLogEntry(Number.NaN),
+      manualLogEntry(Number.POSITIVE_INFINITY),
+    ]);
+    await writebackPhase(['2026-06-01']);
+    expect(mockSaveQuantity).not.toHaveBeenCalled();
   });
 
   it('returns true once all dates are attempted (no quota concept)', async () => {

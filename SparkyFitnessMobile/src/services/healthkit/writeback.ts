@@ -46,7 +46,7 @@ type DailySummary = Awaited<ReturnType<typeof fetchDailySummary>>;
 // summary once per date, maps the manually-logged entries to HealthKit samples, and
 // replaces the previous run's records (delete-then-save). Nutrition is written as one
 // HKCorrelationTypeIdentifierFood per food entry so it appears grouped in Apple Health;
-// hydration is a single DietaryWater sample per day. iOS only; Android uses
+// hydration is written per manually logged drink, plus optional food-derived water. iOS only; Android uses
 // healthconnect/writeback.ts via the top-level ./writeback shim.
 
 // HKCorrelationTypeIdentifierFood — the grouped "one food" record. Also doubles as the
@@ -344,6 +344,7 @@ const buildHydrationDescriptors = async (
 
   for (const entry of logEntries) {
     if (entry.source !== 'manual') continue; // provider-synced — never re-export
+    if (!Number.isFinite(entry.water_ml) || entry.water_ml <= 0) continue;
     const loggedAt = new Date(entry.logged_at);
     if (Number.isNaN(loggedAt.getTime())) continue;
     descriptors.push({
@@ -362,10 +363,8 @@ const buildHydrationDescriptors = async (
     if (remainder) {
       descriptors.push(remainder);
     } else {
-      // Noon anchor still in the future for the synthetic remainder. Real
-      // ledger rows above never defer, but the remainder's absence would
-      // still understate the day, so treat the whole day as unresolved —
-      // matching the pre-per-entry deferral contract exactly.
+      // Only defer the food remainder; real drinks can still sync now.
+      // Withhold the signature until the remainder can be written.
       deferred = true;
     }
   }
@@ -393,19 +392,9 @@ const writeHydrationForDate = async (
     return;
   }
 
-  // Bail before the signature check: storing a signature here would make
-  // every later pre-noon run report "unchanged" no matter how much the food
-  // remainder moves.
-  if (deferred) {
-    addLog(
-      `[Writeback] Hydration ${date}: deferred — noon anchor still in the future`,
-      'DEBUG'
-    );
-    return;
-  }
-
   const signature = hydrationSignature(descriptors);
   if (
+    !deferred &&
     signature === (await loadHealthPreference<string>(hydrationSigKey(date)))
   ) {
     addLog(`[Writeback] Hydration ${date}: unchanged — skipped`, 'DEBUG');
@@ -415,7 +404,10 @@ const writeHydrationForDate = async (
   const previous =
     (await loadHealthPreference<string[]>(hydrationUuidsKey(date))) ?? [];
   const tracked: string[] = [];
-  let allSucceeded = true;
+  let allSucceeded = !deferred;
+  // Invalidate before changing HealthKit so a failed replacement cannot leave
+  // an old signature that skips reconciliation if the diary is reverted.
+  await saveHealthPreference(hydrationSigKey(date), null);
   if (previous.length > 0) {
     try {
       await deleteObjects(DIETARY_WATER_IDENTIFIER, { uuids: previous });
@@ -424,10 +416,9 @@ const writeHydrationForDate = async (
         `[Writeback] Failed to delete previous water for ${date}: ${message(error)}`,
         'WARNING'
       );
-      // Keep the undeleted UUIDs and withhold the signature so a later run retries them
-      // instead of orphaning the sample in HealthKit.
-      tracked.push(...previous);
-      allSucceeded = false;
+      // Leave tracking intact and retry later. Saving replacements now would
+      // duplicate the old water and inflate Apple Health's hydration total.
+      return;
     }
   }
 
